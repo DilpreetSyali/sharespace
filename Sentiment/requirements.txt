@@ -1,0 +1,4 @@
+fastapi
+uvicorn[standard]
+vaderSentiment==3.3.2
+pydantic
