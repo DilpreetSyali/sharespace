@@ -30,7 +30,7 @@ function Register() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const pattern = ".nitandhra.ac.in";
+    const pattern = ".geu.ac.in";
     const inputPattern = data.mail.slice(
       data.mail.length - 16,
       data.mail.length
@@ -39,7 +39,8 @@ function Register() {
       toast.error("Name field required!");
       return;
     }
-    if (inputPattern !== pattern) {
+    // if (inputPattern !== pattern) {
+    if (!data.mail.endsWith("@geu.ac.in")) {
       toast.error("Please enter valid student mail-id!");
       return;
     }
