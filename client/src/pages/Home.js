@@ -167,7 +167,7 @@ function Home() {
         ""
       )}
       <nav id={styles.navbar}>
-        <div id={styles.navLogo}>buyNsell</div>
+        <div id={styles.navLogo}>ShareSpace</div>
         <div id={styles.searchBox}>
           <input
             value={searchval}
