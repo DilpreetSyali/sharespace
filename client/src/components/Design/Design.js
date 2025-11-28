@@ -11,9 +11,7 @@ function Design() {
       <div id={styles.loginLogo}>
         <div id={styles.loginBuyNSell}>
           <div>
-            buy
-            <span style={{ fontFamily: "'Playfair Display', serif" }}>&</span>
-            sell
+            ShareSpace
           </div>
         </div>
         <div id={styles.loginMotto}>
