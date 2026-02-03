@@ -10,11 +10,19 @@ services:
       - MONGO_URI=mongodb://mongo:27017/sharespace
       - SENTIMENT_URL=http://sentiment:7000/predict
       - CONDITION_URL=http://condition:7001/predict_file
+      - RECOMMENDATION_URL=http://recommendation:7002/predict
     depends_on:
       - mongo
       - sentiment
       - condition
+      - recommendation
 
+   recommendation:
+    build: ./Recommendation
+    container_name: recommendation-ml
+    ports:
+      - "7002:7002"
+      
   condition:
     build: ./Condition
     container_name: condition-ml
