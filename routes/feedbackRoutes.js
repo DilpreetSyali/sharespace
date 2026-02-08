@@ -1,9 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { createFeedback, getItemFeedback } = require('../controllers/feedbackController');
-const protect = require('../middleware/authMiddleware');
+const auth = require('../middleware/authMiddleware');
+const adminOnly = require('../middleware/adminMiddleware');
+const { createFeedback, getAllFeedback } = require('../controllers/feedbackController');
 
-router.post('/', protect, createFeedback);      // POST /api/feedback
-router.get('/item/:id', getItemFeedback);      // GET  /api/feedback/item/:id
+router.post('/', auth, createFeedback);
+
+/* ADMIN */
+router.get('/', auth, adminOnly, getAllFeedback);
 
 module.exports = router;

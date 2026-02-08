@@ -1,26 +1,20 @@
-# FastAPI + VADER sentiment service
 from fastapi import FastAPI
 from pydantic import BaseModel
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 app = FastAPI(title="ShareSpace Sentiment Service")
-analyzer = SentimentIntensityAnalyzer()
 
-class TextIn(BaseModel):
+class SentimentIn(BaseModel):
     text: str
 
 @app.post("/predict")
-def predict(payload: TextIn):
-    text = (payload.text or "").strip()
-    if not text:
-        return {"sentiment": "neutral", "score": 0.0}
-    scores = analyzer.polarity_scores(text)
-    compound = scores["compound"]
-    # thresholds tuned for VADER
-    if compound >= 0.05:
-        label = "positive"
-    elif compound <= -0.05:
-        label = "negative"
+def predict_sentiment(payload: SentimentIn):
+    text = payload.text.lower()
+
+    if any(w in text for w in ["good", "great", "excellent", "love"]):
+        sentiment = "positive"
+    elif any(w in text for w in ["bad", "poor", "worst", "hate"]):
+        sentiment = "negative"
     else:
-        label = "neutral"
-    return {"sentiment": label, "score": compound}
+        sentiment = "neutral"
+
+    return {"sentiment": sentiment}
