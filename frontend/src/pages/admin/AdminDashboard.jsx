@@ -1,110 +1,53 @@
-cat > src/pages/admin/AdminDashboard.jsx << 'EOF'
-import { useEffect, useState } from "react";
-import client from "../../api/client";
-
-function StatCard({ label, value }) {
-  return (
-    <div className="bg-white border rounded-2xl p-4">
-      <div className="text-sm text-gray-500">{label}</div>
-      <div className="text-2xl font-bold mt-1">{value}</div>
-    </div>
-  );
-}
-
-function Box({ title, children }) {
-  return (
-    <div className="bg-white border rounded-2xl p-4">
-      <div className="font-semibold mb-3">{title}</div>
-      {children}
-    </div>
-  );
-}
-
 export default function AdminDashboard() {
-  const [stats, setStats] = useState({ users: "-", items: "-", transactions: "-", feedback: "-" });
-  const [recent, setRecent] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        // If you create this endpoint later, it will auto-use it:
-        // GET /api/admin/stats -> { users, items, transactions, feedback }
-        const res = await client.get("/api/admin/stats");
-        setStats(res.data);
-      } catch {
-        // Fallback: counts by list endpoints (change these if your routes differ)
-        const [u, i, t, f] = await Promise.allSettled([
-          client.get("/api/users"),
-          client.get("/api/items"),
-          client.get("/api/transactions"),
-          client.get("/api/feedback"),
-        ]);
-
-        setStats({
-          users: u.value?.data?.length ?? "-",
-          items: i.value?.data?.length ?? "-",
-          transactions: t.value?.data?.length ?? "-",
-          feedback: f.value?.data?.length ?? "-",
-        });
-      }
-
-      try {
-        // Optional: recent activity endpoint
-        const r = await client.get("/api/admin/recent");
-        setRecent(Array.isArray(r.data) ? r.data : []);
-      } catch {
-        setRecent([]);
-      }
-
-      setLoading(false);
-    })();
-  }, []);
+  const stats = [
+    { title: "Total Users", value: "—", hint: "All registered users" },
+    { title: "Items Listed", value: "—", hint: "Active listings" },
+    { title: "Transactions", value: "—", hint: "Requests & exchanges" },
+    { title: "Feedback", value: "—", hint: "Ratings & comments" },
+  ];
 
   return (
     <div className="space-y-6">
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total Users" value={stats.users} />
-        <StatCard label="Total Items" value={stats.items} />
-        <StatCard label="Transactions" value={stats.transactions} />
-        <StatCard label="Feedback Entries" value={stats.feedback} />
+      <div>
+        <h1 className="text-2xl font-extrabold text-slate-900">Dashboard</h1>
+        <p className="text-sm text-slate-500">Overview of ShareSpace activity.</p>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-4">
-        <Box title="System Status">
-          <ul className="text-sm text-gray-700 space-y-2">
-            <li className="flex justify-between">
-              <span>API Connection</span>
-              <span className="text-gray-500">{loading ? "Checking..." : "OK / Check endpoints"}</span>
-            </li>
-            <li className="flex justify-between">
-              <span>Admin Endpoints</span>
-              <span className="text-gray-500">Optional (stats/recent)</span>
-            </li>
-            <li className="text-xs text-gray-500 mt-2">
-              If counts show “-”, update fallback endpoints in <b>AdminDashboard.jsx</b>.
-            </li>
-          </ul>
-        </Box>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {stats.map((s) => (
+          <div key={s.title} className="bg-white border rounded-2xl p-5 shadow-sm">
+            <div className="text-sm text-slate-500">{s.title}</div>
+            <div className="text-3xl font-extrabold text-slate-900 mt-2">{s.value}</div>
+            <div className="text-xs text-slate-400 mt-1">{s.hint}</div>
+          </div>
+        ))}
+      </div>
 
-        <Box title="Recent Activity">
-          {recent.length === 0 ? (
-            <div className="text-sm text-gray-500">
-              No recent feed endpoint found. (Optional) Create <b>/api/admin/recent</b>.
-            </div>
-          ) : (
-            <div className="text-sm">
-              {recent.map((r, idx) => (
-                <div key={idx} className="py-2 border-b last:border-b-0">
-                  <div className="font-medium">{r.title || r.type || "Activity"}</div>
-                  <div className="text-xs text-gray-500">{r.time || r.createdAt || ""}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </Box>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div className="bg-white border rounded-2xl p-5 shadow-sm xl:col-span-2">
+          <div className="font-bold text-slate-900">Quick Notes</div>
+          <ul className="mt-3 text-sm text-slate-600 space-y-2 list-disc pl-5">
+            <li>Approve/reject items from the Items tab (we can add buttons next).</li>
+            <li>Track exchange flow in Transactions.</li>
+            <li>Monitor user feedback quality and sentiment.</li>
+          </ul>
+        </div>
+
+        <div className="bg-white border rounded-2xl p-5 shadow-sm">
+          <div className="font-bold text-slate-900">Admin Actions</div>
+          <div className="mt-3 grid gap-2">
+            <a className="px-4 py-3 rounded-xl border hover:bg-slate-100" href="/admin/items">
+              Review Items
+            </a>
+            <a className="px-4 py-3 rounded-xl border hover:bg-slate-100" href="/admin/users">
+              View Users
+            </a>
+            <a className="px-4 py-3 rounded-xl border hover:bg-slate-100" href="/admin/feedback">
+              Read Feedback
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
-EOF

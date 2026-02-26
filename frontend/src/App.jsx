@@ -1,44 +1,48 @@
-cat > src/App.jsx << 'EOF'
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
-import AdminRoute from "./components/AdminRoute";
-import AdminLayout from "./layouts/AdminLayout";
-
-import AdminLogin from "./pages/admin/AdminLogin";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminItems from "./pages/admin/AdminItems";
-import AdminUsers from "./pages/admin/AdminUsers";
-import AdminTransactions from "./pages/admin/AdminTransactions";
-import AdminFeedback from "./pages/admin/AdminFeedback";
+import { Routes, Route, Navigate } from 'react-router-dom'
+import Signup from './pages/Signup.jsx'
+import Login from './pages/Login.jsx'
+import Dashboard from './pages/Dashboard.jsx'
+import CreateItem from './pages/CreateItem.jsx'
+import ItemDetails from './pages/ItemDetails.jsx'
+import ProtectedRoute from './components/ProtectedRoute.jsx'
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/admin" replace />} />
+    <Routes>
+      {/* First screen is Signup */}
+      <Route path="/" element={<Navigate to="/signup" replace />} />
 
-          <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/login" element={<Login />} />
 
-          <Route
-            path="/admin"
-            element={
-              <AdminRoute>
-                <AdminLayout />
-              </AdminRoute>
-            }
-          >
-            <Route index element={<AdminDashboard />} />
-            <Route path="items" element={<AdminItems />} />
-            <Route path="users" element={<AdminUsers />} />
-            <Route path="transactions" element={<AdminTransactions />} />
-            <Route path="feedback" element={<AdminFeedback />} />
-          </Route>
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
 
-          <Route path="*" element={<Navigate to="/admin" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
-  );
+      <Route
+        path="/items/new"
+        element={
+          <ProtectedRoute>
+            <CreateItem />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/items/:id"
+        element={
+          <ProtectedRoute>
+            <ItemDetails />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route path="*" element={<Navigate to="/signup" replace />} />
+    </Routes>
+  )
 }
-EOF

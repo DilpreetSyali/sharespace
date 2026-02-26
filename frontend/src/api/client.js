@@ -1,16 +1,14 @@
-cat > src/api/client.js << 'EOF'
 import axios from "axios";
 
-const client = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5000",
-  withCredentials: false,
-});
+// ✅ Use SAME-ORIGIN requests, Vite proxy will forward /api → http://localhost:5000
+const api = axios.create({
+  baseURL: "",
+  });
 
-client.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+  api.interceptors.request.use((config) => {
+    const user = JSON.parse(localStorage.getItem("sharespace_user") || "null");
+      if (user?.token) config.headers.Authorization = `Bearer ${user.token}`;
+        return config;
+        });
 
-export default client;
-EOF
+        export default api;

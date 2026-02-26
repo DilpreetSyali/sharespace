@@ -1,79 +1,79 @@
-cat > src/layouts/AdminLayout.jsx << 'EOF'
-import { NavLink, Outlet } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import logo from "../assets/sharespace-logo.png";
+import { useAuth } from "../context/AuthContext";
 
-const navLinkClass = ({ isActive }) =>
-  "flex items-center gap-2 px-3 py-2 rounded-lg text-sm " +
-  (isActive
-    ? "bg-gray-900 text-white"
-    : "text-gray-700 hover:bg-gray-100");
-
-function Badge({ text }) {
-  return (
-    <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border">
-      {text}
-    </span>
-  );
-}
+const nav = [
+  { to: "/admin", label: "Dashboard" },
+  { to: "/admin/users", label: "Users" },
+  { to: "/admin/items", label: "Items" },
+  { to: "/admin/transactions", label: "Transactions" },
+  { to: "/admin/feedback", label: "Feedback" },
+];
 
 export default function AdminLayout() {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const onLogout = () => {
+    logout?.();
+    navigate("/admin/login");
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <aside className="w-72 bg-white border-r min-h-screen p-4">
-          <div className="flex items-center gap-3 mb-6">
-            <img src={logo} alt="ShareSpace" className="h-12 w-12 rounded-xl border bg-white object-contain p-1" />
+    <div className="min-h-screen flex">
+      {/* Sidebar */}
+      <aside className="hidden md:flex w-72 p-4">
+        <div className="card w-full p-4 flex flex-col">
+          <div className="flex items-center gap-3 p-2">
+            <img src={logo} alt="ShareSpace" className="w-10 h-10 object-contain" />
             <div>
-              <div className="font-bold text-lg leading-tight">ShareSpace</div>
-              <div className="text-xs text-gray-500">Admin Panel</div>
+              <div className="text-slate-900 font-extrabold leading-5">ShareSpace</div>
+              <div className="text-xs text-slate-500">Admin Panel</div>
             </div>
           </div>
 
-          <nav className="space-y-1">
-            <NavLink className={navLinkClass} to="/admin">Dashboard</NavLink>
-            <NavLink className={navLinkClass} to="/admin/items">Items</NavLink>
-            <NavLink className={navLinkClass} to="/admin/users">Users</NavLink>
-            <NavLink className={navLinkClass} to="/admin/transactions">Transactions</NavLink>
-            <NavLink className={navLinkClass} to="/admin/feedback">Feedback</NavLink>
-          </nav>
+          <div className="mt-4 space-y-2">
+            {nav.map((x) => (
+              <NavLink
+                key={x.to}
+                to={x.to}
+                end={x.to === "/admin"}
+                className={({ isActive }) =>
+                  [
+                    "px-4 py-3 rounded-xl font-semibold transition block",
+                    isActive
+                      ? "bg-emerald-600 text-white shadow"
+                      : "text-slate-700 hover:bg-slate-100",
+                  ].join(" ")
+                }
+              >
+                {x.label}
+              </NavLink>
+            ))}
+          </div>
 
-          <div className="mt-8 p-3 rounded-xl border bg-gray-50">
-            <div className="text-xs text-gray-500">Signed in as</div>
-            <div className="font-medium text-sm truncate">{user?.email || "Admin"}</div>
-            <div className="mt-2"><Badge text="admin" /></div>
-
-            <button
-              onClick={logout}
-              className="mt-4 w-full bg-white border rounded-lg px-3 py-2 text-sm hover:bg-gray-100"
-            >
+          <div className="mt-auto pt-4">
+            <button onClick={onLogout} className="btn btn-ghost w-full">
               Logout
             </button>
           </div>
-        </aside>
+        </div>
+      </aside>
 
-        <main className="flex-1 p-6">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <div className="text-sm text-gray-500">ShareSpace</div>
-                <div className="text-2xl font-bold">Admin Dashboard</div>
-              </div>
-              <div className="hidden sm:flex items-center gap-2">
-                <span className="text-xs text-gray-500">Tip:</span>
-                <span className="text-xs px-2 py-1 rounded-full border bg-white">
-                  Edit API endpoints in <b>src/api/client.js</b>
-                </span>
-              </div>
-            </div>
-
-            <Outlet />
+      {/* Main */}
+      <div className="flex-1 p-4 md:p-6">
+        <div className="card p-4 md:p-5 flex items-center justify-between">
+          <div>
+            <div className="text-xs text-slate-500">ShareSpace</div>
+            <div className="text-lg font-extrabold text-slate-900">Admin Console</div>
           </div>
-        </main>
+          <div className="text-xs text-slate-500">From students, for students</div>
+        </div>
+
+        <div className="mt-4 md:mt-6">
+          <Outlet />
+        </div>
       </div>
     </div>
   );
 }
-EOF
