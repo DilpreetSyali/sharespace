@@ -3,25 +3,29 @@ import { useNavigate } from "react-router-dom";
 import api from "../api/client";
 import PageShell from "../components/PageShell.jsx";
 
+const CATEGORIES = ["Books", "Electronics", "Furniture", "Clothing", "Sports", "Other"];
+const CONDITIONS = ["New", "Like new", "Good", "Fair", "Poor"];
+const LOCATIONS = ["Library", "Dorm", "Campus Center", "Gym", "Other"];
+
 export default function CreateItem() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
     title: "",
     description: "",
-    category: "books",
-    condition: "good",
-    isFree: true,
-    price: 0,
+    category: "",
+    condition: "Good",
+    isFree: false,
+    price: "",
     location: "",
   });
 
   const [images, setImages] = useState([]);
-  const [previews, setPreviews] = useState([]);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
   const onChange = (e) => {
+    setErr(""); // Clear error when user starts typing
     const { name, value, type, checked } = e.target;
     setForm((p) => ({
       ...p,
@@ -29,38 +33,73 @@ export default function CreateItem() {
     }));
   };
 
-  const onPickImages = (e) => {
-    const files = Array.from(e.target.files || []).slice(0, 5);
-    setImages(files);
+  const onImageChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length + images.length > 5) {
+      setErr("Maximum 5 images allowed");
+      return;
+    }
+    setImages((p) => [...p, ...files]);
+  };
 
-    const urls = files.map((f) => URL.createObjectURL(f));
-    setPreviews(urls);
+  const removeImage = (idx) => {
+    setImages((p) => p.filter((_, i) => i !== idx));
   };
 
   const submit = async (e) => {
     e.preventDefault();
     setErr("");
+
+    // Validation
+    if (!form.title.trim()) {
+      setErr("Title is required");
+      return;
+    }
+    if (!form.category) {
+      setErr("Category is required");
+      return;
+    }
+    if (!form.location) {
+      setErr("Location is required");
+      return;
+    }
+    if (images.length === 0) {
+      setErr("At least 1 photo is required");
+      return;
+    }
+    if (!form.isFree && !form.price) {
+      setErr("Price is required for non-free items");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const fd = new FormData();
-      fd.append("title", form.title);
-      fd.append("description", form.description);
-      fd.append("category", form.category);
-      fd.append("condition", form.condition);
-      fd.append("isFree", String(form.isFree));
-      fd.append("price", String(form.isFree ? 0 : form.price));
-      fd.append("location", form.location);
+      const formData = new FormData();
+      formData.append("title", form.title.trim());
+      formData.append("description", form.description.trim());
+      formData.append("category", form.category);
+      formData.append("condition", form.condition);
+      formData.append("isFree", String(form.isFree));
+      formData.append("price", String(form.price || 0));
+      formData.append("location", form.location);
 
-      images.forEach((img) => fd.append("images", img));
-
-      await api.post("/api/items", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
+      // Append all image files
+      images.forEach((img) => {
+        formData.append("images", img);
       });
 
-      navigate("/dashboard");
+      console.log("Form state before sending:", form);
+      console.log("Images count:", images.length);
+
+      // Don't manually set Content-Type - axios will handle it with proper boundary
+      const res = await api.post("/api/items", formData);
+
+      navigate(`/items/${res.data._id}`);
     } catch (error) {
-      setErr(error?.response?.data?.message || error?.message || "Failed to create item");
+      console.error("Upload error:", error.response?.data || error.message);
+      const msg = error?.response?.data?.message || error?.message || "Create item failed";
+      setErr(msg);
     } finally {
       setLoading(false);
     }
@@ -68,10 +107,10 @@ export default function CreateItem() {
 
   return (
     <PageShell>
-      <div className="max-w-2xl mx-auto">
+      <div className="w-full max-w-2xl mx-auto">
         <div className="rounded-3xl border bg-white p-6 shadow-sm">
-          <h1 className="text-2xl font-extrabold text-slate-900">Post an item</h1>
-          <p className="text-sm text-slate-500 mt-1">Add up to 5 photos.</p>
+          <h2 className="text-2xl font-extrabold text-slate-900">Post an item for sale</h2>
+          <p className="text-sm text-slate-500 mt-1">Fill in the details below.</p>
 
           {err && (
             <div className="mt-4 text-sm bg-red-50 text-red-700 border border-red-200 rounded-2xl p-3">
@@ -80,112 +119,163 @@ export default function CreateItem() {
           )}
 
           <form onSubmit={submit} className="mt-5 space-y-4">
-            <input
-              className="w-full border border-slate-200 rounded-2xl p-3 outline-none focus:ring-2 focus:ring-slate-200"
+            <Input
+              label="Title *"
               name="title"
-              placeholder="Title"
+              placeholder="What are you selling?"
               value={form.title}
               onChange={onChange}
-              required
             />
 
-            <textarea
-              className="w-full border border-slate-200 rounded-2xl p-3 outline-none focus:ring-2 focus:ring-slate-200"
+            <Textarea
+              label="Description"
               name="description"
-              placeholder="Description"
+              placeholder="Condition, brand, features..."
               value={form.description}
               onChange={onChange}
-              rows={3}
             />
 
-            <div className="grid sm:grid-cols-2 gap-3">
-              <select
-                className="w-full border border-slate-200 rounded-2xl p-3 outline-none focus:ring-2 focus:ring-slate-200"
-                name="category"
-                value={form.category}
-                onChange={onChange}
-              >
-                <option value="books">Books</option>
-                <option value="electronics">Electronics</option>
-                <option value="stationery">Stationery</option>
-                <option value="hostel">Hostel</option>
-                <option value="other">Other</option>
-              </select>
+            <Select
+              label="Category *"
+              name="category"
+              options={CATEGORIES}
+              value={form.category}
+              onChange={onChange}
+            />
 
-              <select
-                className="w-full border border-slate-200 rounded-2xl p-3 outline-none focus:ring-2 focus:ring-slate-200"
-                name="condition"
-                value={form.condition}
-                onChange={onChange}
-              >
-                <option value="like-new">Like new</option>
-                <option value="good">Good</option>
-                <option value="fair">Fair</option>
-                <option value="poor">Poor</option>
-              </select>
-            </div>
+            <Select
+              label="Condition"
+              name="condition"
+              options={CONDITIONS}
+              value={form.condition}
+              onChange={onChange}
+            />
 
-            <input
-              className="w-full border border-slate-200 rounded-2xl p-3 outline-none focus:ring-2 focus:ring-slate-200"
+            <Select
+              label="Location *"
               name="location"
-              placeholder="Location (e.g. Hostel A)"
+              options={LOCATIONS}
               value={form.location}
               onChange={onChange}
-              required
             />
 
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                name="isFree"
-                checked={form.isFree}
-                onChange={onChange}
-              />
-              <span className="text-sm text-slate-700 font-semibold">This item is free</span>
-            </div>
-
-            {!form.isFree && (
-              <input
-                className="w-full border border-slate-200 rounded-2xl p-3 outline-none focus:ring-2 focus:ring-slate-200"
-                name="price"
-                type="number"
-                min="0"
-                placeholder="Price (₹)"
-                value={form.price}
-                onChange={onChange}
-              />
-            )}
-
-            {/* ✅ Image uploader */}
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-900">Photos</label>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={onPickImages}
-                className="block w-full text-sm"
-              />
-              {previews.length > 0 && (
-                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                  {previews.map((src, i) => (
-                    <div key={i} className="aspect-square rounded-2xl overflow-hidden border bg-slate-50">
-                      <img src={src} alt={`preview-${i}`} className="h-full w-full object-cover" />
-                    </div>
-                  ))}
-                </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Price</label>
+              <div className="flex gap-3">
+                <input
+                  type="checkbox"
+                  name="isFree"
+                  checked={form.isFree}
+                  onChange={onChange}
+                  className="mt-3"
+                />
+                <label className="text-sm text-slate-600 mt-3">Free item</label>
+              </div>
+              {!form.isFree && (
+                <Input
+                  name="price"
+                  type="number"
+                  placeholder="Price in $"
+                  value={form.price}
+                  onChange={onChange}
+                />
               )}
             </div>
 
+            <div>
+              <label className="block text-sm font-semibold text-slate-900 mb-2">
+                Photos (max 5) *
+              </label>
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={onImageChange}
+                className="w-full border border-slate-200 rounded-2xl p-3"
+              />
+              <div className="mt-3 grid grid-cols-5 gap-2">
+                {images.map((img, idx) => (
+                  <div key={idx} className="relative">
+                    <img
+                      src={URL.createObjectURL(img)}
+                      alt={`Preview ${idx}`}
+                      className="w-full h-20 object-cover rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(idx)}
+                      className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <button
+              type="submit"
               disabled={loading}
               className="w-full rounded-2xl p-3 font-extrabold bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-60 transition"
             >
-              {loading ? "Posting..." : "Post item"}
+              {loading ? "Publishing..." : "Publish item"}
             </button>
           </form>
         </div>
       </div>
     </PageShell>
+  );
+}
+
+function Input({ label, name, value, onChange, placeholder, type = "text" }) {
+  return (
+    <div>
+      <label className="block text-sm font-semibold text-slate-900 mb-2">{label}</label>
+      <input
+        className="w-full border border-slate-200 rounded-2xl p-3 outline-none focus:ring-2 focus:ring-slate-200"
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+      />
+    </div>
+  );
+}
+
+function Textarea({ label, name, value, onChange, placeholder }) {
+  return (
+    <div>
+      <label className="block text-sm font-semibold text-slate-900 mb-2">{label}</label>
+      <textarea
+        className="w-full border border-slate-200 rounded-2xl p-3 outline-none focus:ring-2 focus:ring-slate-200"
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        rows="4"
+      />
+    </div>
+  );
+}
+
+function Select({ label, name, options, value, onChange }) {
+  return (
+    <div>
+      <label className="block text-sm font-semibold text-slate-900 mb-2">{label}</label>
+      <select
+        className="w-full border border-slate-200 rounded-2xl p-3 outline-none focus:ring-2 focus:ring-slate-200"
+        name={name}
+        value={value}
+        onChange={onChange}
+      >
+        <option value="">-- Select --</option>
+        {options.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }

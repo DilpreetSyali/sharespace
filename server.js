@@ -1,36 +1,49 @@
-const express = require('express');
-const dotenv = require('dotenv');
-const path = require('path');
-const connectDB = require('./config/db');
+const express = require("express");
+const path = require("path");
+const cors = require("cors");
+require("dotenv").config();
 
-dotenv.config();
+const connectDB = require("./config/db");
+
+// ✅ routes (IMPORTANT: require directly, NOT inside { })
+const userRoutes = require("./routes/userRoutes");
+const itemRoutes = require("./routes/itemRoutes");
+const transactionRoutes = require("./routes/transactionRoutes");
+const feedbackRoutes = require("./routes/feedbackRoutes");
+
 connectDB();
 
-const app = express();              // 1) create app
+const app = express();
 
-app.use(express.json());            // 2) common middleware
+// ✅ middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// serve static SEO landing page
-app.use(express.static(path.join(__dirname, 'public')));
+// ✅ DEBUG: Log all requests to /api/items
+app.use("/api/items", (req, res, next) => {
+  if (req.method === "POST") {
+    console.log("=== REQUEST TO /api/items ===");
+    console.log("Method:", req.method);
+    console.log("Content-Type:", req.get("content-type"));
+    console.log("Headers:", req.headers);
+  }
+  next();
+});
 
-// routes imports
-const userRoutes = require('./routes/userRoutes');
-const itemRoutes = require('./routes/itemRoutes');
-const transactionRoutes = require('./routes/transactionRoutes');
-const feedbackRoutes = require('./routes/feedbackRoutes');  // moved up
+// ✅ serve uploaded images
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// use routes AFTER app is defined
-app.use('/api/users', userRoutes);
-app.use('/api/items', itemRoutes);
-app.use('/api/transactions', transactionRoutes);
-app.use('/api/feedback', feedbackRoutes);
+// ✅ routes
+app.use("/api/users", userRoutes);
+app.use("/api/items", itemRoutes);
+app.use("/api/transactions", transactionRoutes);
+app.use("/api/feedback", feedbackRoutes);
 
-// SEO test/landing route
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// ✅ health check
+app.get("/", (req, res) => {
+  res.send("ShareSpace API running");
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));

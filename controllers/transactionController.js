@@ -85,9 +85,22 @@ const updateTransactionStatus = async (req, res) => {
   }
 };
 
+// ADMIN helper – return every transaction in the system
+const getAllTransactions = async (req, res) => {
+  try {
+    const txs = await Transaction.find()
+      .populate('item', 'title status')
+      .populate('owner requester', 'name email');
+    res.json(txs);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   createTransaction,
   getMyTransactions,
   getOwnerTransactions,
-  updateTransactionStatus
+  updateTransactionStatus,
+  getAllTransactions
 };

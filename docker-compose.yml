@@ -17,12 +17,12 @@ services:
       - condition
       - recommendation
 
-   recommendation:
+  recommendation:
     build: ./Recommendation
     container_name: recommendation-ml
     ports:
       - "7002:7002"
-      
+
   condition:
     build: ./Condition
     container_name: condition-ml

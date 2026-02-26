@@ -7,17 +7,22 @@
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
-  "keywords": ["mern", "sharespace", "backend"],
+  "keywords": [
+    "mern",
+    "sharespace",
+    "backend"
+  ],
   "author": "Your Team",
   "license": "MIT",
   "dependencies": {
+    "axios": "^1.13.5",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^9.0.0",
-    "mongodb": "^7.0.0"
+    "mongodb": "^7.0.0",
+    "mongoose": "^9.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.7"
