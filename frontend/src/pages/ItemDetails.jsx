@@ -3,6 +3,19 @@ import { Link, useParams } from "react-router-dom";
 import api from "../api/client";
 import PageShell from "../components/PageShell.jsx";
 
+function normalizeImageSrc(src) {
+  if (!src) return "";
+
+  if (src.startsWith("/uploads/")) return src;
+
+  if (src.includes("/uploads/")) {
+    const idx = src.indexOf("/uploads/");
+    return src.slice(idx);
+  }
+
+  return src;
+}
+
 export default function ItemDetails() {
   const { id } = useParams();
   const [item, setItem] = useState(null);
@@ -55,12 +68,15 @@ export default function ItemDetails() {
               </span>
             </div>
 
-            {/* ✅ Photos */}
             {item.images?.length > 0 && (
               <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {item.images.map((src, i) => (
                   <div key={i} className="rounded-3xl overflow-hidden border bg-slate-50">
-                    <img src={src} alt={`item-${i}`} className="h-48 w-full object-cover" />
+                    <img
+                      src={normalizeImageSrc(src)}
+                      alt={`item-${i}`}
+                      className="h-48 w-full object-cover"
+                    />
                   </div>
                 ))}
               </div>
