@@ -1,0 +1,21 @@
+export const COLLEGES = [
+  "IIT Delhi",
+  "IIT Bombay",
+  "IIT Kanpur",
+  "IIT Kharagpur",
+  "Delhi University",
+  "Jamia Millia Islamia",
+  "Amity University",
+  "Graphic Era University(GEU)",
+  "Graphic Era Hill University",
+  "Shiv Nadar University",
+  "Indraprastha Institute of Information Technology (IIIT) Delhi",
+  "Galgotias University",
+  "Ashoka University",
+  "O.P. Jindal Global University",
+  "GLA University",
+  "Lovely Professional University",
+  "Manipal University",
+  "VIT",
+  "Other"
+];

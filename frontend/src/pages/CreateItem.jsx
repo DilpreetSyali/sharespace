@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/client";
 import PageShell from "../components/PageShell.jsx";
@@ -33,6 +33,12 @@ export default function CreateItem() {
     if (!image) return "";
     return URL.createObjectURL(image);
   }, [image]);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   const onChange = (e) => {
     setErr("");
@@ -87,18 +93,14 @@ export default function CreateItem() {
       fd.append("price", form.isFree ? "0" : String(Number(form.price)));
 
       if (image) {
-        fd.append("images", image);
-      }
-
-      for (const [key, value] of fd.entries()) {
-        console.log(key, value);
+        fd.append("images", image, image.name);
       }
 
       await api.post("/api/items", fd);
 
       navigate("/dashboard");
     } catch (error) {
-      console.error(error);
+      console.error("Create item failed:", error);
       setErr(error?.response?.data?.message || "Upload failed");
     } finally {
       setLoading(false);
@@ -112,7 +114,7 @@ export default function CreateItem() {
 
         {err && <div className="bg-red-100 text-red-700 p-3 rounded-xl mb-4">{err}</div>}
 
-        <form onSubmit={submit} className="space-y-4">
+        <form onSubmit={submit} className="space-y-4" encType="multipart/form-data">
           <input
             name="title"
             placeholder="Title"
@@ -189,7 +191,12 @@ export default function CreateItem() {
 
           <div>
             <p className="text-sm text-gray-600 mb-2">Image (optional)</p>
-            <input type="file" accept="image/*" onChange={onImageChange} />
+            <input
+              type="file"
+              name="images"
+              accept="image/png,image/jpeg,image/jpg,image/webp"
+              onChange={onImageChange}
+            />
           </div>
 
           {previewUrl && (

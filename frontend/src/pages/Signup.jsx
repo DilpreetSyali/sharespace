@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { COLLEGES } from "/workspaces/sharespace/frontend/src/constants/ colleges";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api/client";
 import PageShell from "../components/PageShell.jsx";
@@ -11,6 +12,7 @@ export default function Signup() {
     email: "",
     password: "",
     collegeID: "",
+    customCollege: "",
     role: "student",
   });
 
@@ -18,7 +20,8 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
 
   const onChange = (e) => {
-    setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setForm((p) => ({ ...p, [name]: value }));
   };
 
   const submit = async (e) => {
@@ -27,11 +30,20 @@ export default function Signup() {
     setLoading(true);
 
     try {
+      const finalCollege =
+        form.collegeID === "Other" ? form.customCollege.trim() : form.collegeID.trim();
+
+      if (!finalCollege) {
+        setErr("Please select or enter your college");
+        setLoading(false);
+        return;
+      }
+
       const payload = {
         name: form.name.trim(),
         email: form.email.trim().toLowerCase(),
         password: form.password,
-        collegeID: form.collegeID.trim(),
+        collegeID: finalCollege,
         role: form.role,
       };
 
@@ -47,18 +59,19 @@ export default function Signup() {
 
   return (
     <PageShell>
-      <div className="grid lg:grid-cols-2 gap-6 items-center">
+      <div className="grid items-center gap-6 lg:grid-cols-2">
         <div className="hidden lg:block">
           <div className="rounded-3xl border bg-white p-8 shadow-sm">
             <h1 className="text-3xl font-extrabold text-slate-900">
               Sell to your campus. Buy from your campus.
             </h1>
             <p className="mt-3 text-slate-600">
-              ShareSpace shows listings only from your <span className="font-semibold">same college</span>.
+              ShareSpace shows listings only from your{" "}
+              <span className="font-semibold">same college</span>.
               Faster deals, safer chats, and cheaper items.
             </p>
 
-            <div className="mt-6 grid sm:grid-cols-2 gap-3">
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <Feature title="Same-college feed" desc="Only your campus listings." />
               <Feature title="Quick posting" desc="List items in minutes." />
               <Feature title="Better prices" desc="Save money on essentials." />
@@ -67,15 +80,15 @@ export default function Signup() {
           </div>
         </div>
 
-        <div className="w-full max-w-md mx-auto">
+        <div className="mx-auto w-full max-w-md">
           <div className="rounded-3xl border bg-white p-6 shadow-sm">
             <h2 className="text-2xl font-extrabold text-slate-900">Create your account</h2>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="mt-1 text-sm text-slate-500">
               Start with your college name. You’ll see campus listings after login.
             </p>
 
             {err && (
-              <div className="mt-4 text-sm bg-red-50 text-red-700 border border-red-200 rounded-2xl p-3">
+              <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                 {err}
               </div>
             )}
@@ -83,17 +96,40 @@ export default function Signup() {
             <form onSubmit={submit} className="mt-5 space-y-3">
               <Input name="name" placeholder="Full name" value={form.name} onChange={onChange} />
               <Input name="email" placeholder="Email" value={form.email} onChange={onChange} />
-              <Input name="password" type="password" placeholder="Password" value={form.password} onChange={onChange} />
-
               <Input
-                name="collegeID"
-                placeholder="College (exact name)"
-                value={form.collegeID}
+                name="password"
+                type="password"
+                placeholder="Password"
+                value={form.password}
                 onChange={onChange}
               />
 
               <select
-                className="w-full border border-slate-200 rounded-2xl p-3 outline-none focus:ring-2 focus:ring-slate-200"
+                className="w-full rounded-2xl border border-slate-200 p-3 outline-none focus:ring-2 focus:ring-slate-200"
+                name="collegeID"
+                value={form.collegeID}
+                onChange={onChange}
+                required
+              >
+                <option value="">Select your college</option>
+                {COLLEGES.map((college, index) => (
+                  <option key={`${college}-${index}`} value={college}>
+                    {college}
+                  </option>
+                ))}
+              </select>
+
+              {form.collegeID === "Other" && (
+                <Input
+                  name="customCollege"
+                  placeholder="Enter your college name"
+                  value={form.customCollege}
+                  onChange={onChange}
+                />
+              )}
+
+              <select
+                className="w-full rounded-2xl border border-slate-200 p-3 outline-none focus:ring-2 focus:ring-slate-200"
                 name="role"
                 value={form.role}
                 onChange={onChange}
@@ -104,13 +140,13 @@ export default function Signup() {
 
               <button
                 disabled={loading}
-                className="w-full rounded-2xl p-3 font-extrabold bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-60 transition"
+                className="w-full rounded-2xl bg-slate-900 p-3 font-extrabold text-white transition hover:bg-slate-800 disabled:opacity-60"
               >
                 {loading ? "Creating..." : "Create account"}
               </button>
             </form>
 
-            <p className="text-sm text-slate-600 mt-4">
+            <p className="mt-4 text-sm text-slate-600">
               Already have an account?{" "}
               <Link className="font-semibold text-slate-900 underline" to="/login">
                 Login
@@ -126,7 +162,7 @@ export default function Signup() {
 function Input({ name, value, onChange, placeholder, type = "text" }) {
   return (
     <input
-      className="w-full border border-slate-200 rounded-2xl p-3 outline-none focus:ring-2 focus:ring-slate-200"
+      className="w-full rounded-2xl border border-slate-200 p-3 outline-none focus:ring-2 focus:ring-slate-200"
       name={name}
       value={value}
       onChange={onChange}
@@ -141,7 +177,7 @@ function Feature({ title, desc }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
       <div className="font-bold text-slate-900">{title}</div>
-      <div className="text-sm text-slate-600 mt-1">{desc}</div>
+      <div className="mt-1 text-sm text-slate-600">{desc}</div>
     </div>
   );
 }

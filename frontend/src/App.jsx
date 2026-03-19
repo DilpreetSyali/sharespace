@@ -5,6 +5,8 @@ import Dashboard from './pages/Dashboard.jsx'
 import CreateItem from './pages/CreateItem.jsx'
 import ItemDetails from './pages/ItemDetails.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
+import Inbox from "./pages/Inbox.jsx";
+import Chat from "./pages/Chat.jsx";
 
 export default function App() {
   return (
@@ -15,6 +17,9 @@ export default function App() {
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
 
+      <Route path="/inbox" element={<Inbox />} />
+      <Route path="/messages/:conversationId" element={<Chat />} />
+      
       <Route
         path="/dashboard"
         element={
