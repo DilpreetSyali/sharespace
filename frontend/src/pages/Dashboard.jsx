@@ -4,6 +4,19 @@ import api from "../api/client";
 import { useAuth } from "../context/AuthContext.jsx";
 import PageShell from "../components/PageShell.jsx";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+function normalizeImageSrc(src) {
+  if (!src) return "";
+  if (src.startsWith("/uploads/")) return src;
+  if (src.startsWith("uploads/")) return `/${src}`;
+  if (src.includes("/uploads/")) {
+    const idx = src.indexOf("/uploads/");
+    return src.slice(idx);
+  }
+  return `/uploads/${src}`;
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
 
@@ -98,27 +111,46 @@ export default function Dashboard() {
               <Link
                 key={it._id}
                 to={`/items/${it._id}`}
-                className="group rounded-3xl border bg-white p-5 shadow-sm hover:shadow-md transition"
+                className="group rounded-3xl border bg-white overflow-hidden shadow-sm hover:shadow-md transition"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="font-extrabold text-slate-900 group-hover:underline">
-                    {it.title}
+                <div className="aspect-4/3 bg-slate-100 overflow-hidden">
+                  {it.images?.[0] ? (
+                    <img
+                      src={normalizeImageSrc(it.images[0])}
+                      alt={it.title}
+                      className="h-full w-full object-cover group-hover:scale-[1.02] transition"
+                    />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center text-sm text-slate-400">
+                      No image
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="font-extrabold text-slate-900 group-hover:underline">
+                      {it.title}
+                    </div>
+                    <PricePill isFree={it.isFree} price={it.price} />
                   </div>
-                  <PricePill isFree={it.isFree} price={it.price} />
-                </div>
 
-                <div className="text-sm text-slate-600 mt-2 line-clamp-2">
-                  {it.description || "No description"}
-                </div>
+                  <div className="text-sm text-slate-600 mt-2 line-clamp-2">
+                    {it.description || "No description"}
+                  </div>
 
-                <div className="mt-4 flex flex-wrap gap-2 text-xs">
-                  <Tag>{it.category}</Tag>
-                  <Tag>{it.condition}</Tag>
-                  <Tag>{it.location}</Tag>
-                </div>
+                  <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                    <Tag>{it.category}</Tag>
+                    <Tag>{it.condition}</Tag>
+                    <Tag>{it.location}</Tag>
+                  </div>
 
-                <div className="mt-4 text-xs text-slate-500">
-                  Seller: <span className="font-semibold text-slate-700">{it.owner?.name || "Unknown"}</span>
+                  <div className="mt-4 text-xs text-slate-500">
+                    Seller:{" "}
+                    <span className="font-semibold text-slate-700">
+                      {it.owner?.name || "Unknown"}
+                    </span>
+                  </div>
                 </div>
               </Link>
             ))}
@@ -158,15 +190,18 @@ function SkeletonGrid() {
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={i}
-          className="rounded-3xl border bg-white p-5 shadow-sm animate-pulse"
+          className="rounded-3xl border bg-white overflow-hidden shadow-sm animate-pulse"
         >
-          <div className="h-4 w-2/3 bg-slate-200 rounded" />
-          <div className="mt-3 h-3 w-full bg-slate-200 rounded" />
-          <div className="mt-2 h-3 w-5/6 bg-slate-200 rounded" />
-          <div className="mt-4 flex gap-2">
-            <div className="h-6 w-16 bg-slate-200 rounded-full" />
-            <div className="h-6 w-16 bg-slate-200 rounded-full" />
-            <div className="h-6 w-16 bg-slate-200 rounded-full" />
+          <div className="h-48 bg-slate-200" />
+          <div className="p-5">
+            <div className="h-4 w-2/3 bg-slate-200 rounded" />
+            <div className="mt-3 h-3 w-full bg-slate-200 rounded" />
+            <div className="mt-2 h-3 w-5/6 bg-slate-200 rounded" />
+            <div className="mt-4 flex gap-2">
+              <div className="h-6 w-16 bg-slate-200 rounded-full" />
+              <div className="h-6 w-16 bg-slate-200 rounded-full" />
+              <div className="h-6 w-16 bg-slate-200 rounded-full" />
+            </div>
           </div>
         </div>
       ))}

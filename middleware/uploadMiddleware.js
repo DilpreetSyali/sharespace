@@ -2,49 +2,30 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-// Absolute uploads folder at project root (using __dirname ensures it works from anywhere)
-const uploadsDir = path.resolve(__dirname, "../uploads");
+const uploadDir = path.join(process.cwd(), "uploads");
 
-console.log("📂 Uploads directory configuration:");
-console.log("   __dirname:", __dirname);
-console.log("   uploadsDir absolute:", uploadsDir);
-
-// Ensure folder exists
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true, mode: 0o777 });
-  console.log("✅ Created uploads directory");
-} else {
-  console.log("✅ Uploads directory already exists");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Verify writeable
-try {
-  fs.accessSync(uploadsDir, fs.constants.W_OK);
-  console.log("✅ Uploads folder is writable");
-} catch (err) {
-  console.error("❌ Uploads folder not writable:", err.message);
-}
-
-// Multer storage
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir), // always absolute
-  filename: (req, file, cb) => {
-    const timestamp = Date.now();
-    const random = Math.floor(Math.random() * 1e9);
+  destination: function (req, file, cb) {
+    console.log("MULTER DESTINATION:", uploadDir);
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    console.log("MULTER FILE:", file.originalname, file.mimetype);
     const ext = path.extname(file.originalname);
-    const name = path.basename(file.originalname, ext);
-    const filename = `${name}-${timestamp}-${random}${ext}`;
-    console.log(`📄 Generated filename: ${filename}`);
-    cb(null, filename);
+    const base = path.basename(file.originalname, ext).replace(/\s+/g, "-");
+    cb(null, `${base}-${Date.now()}${ext}`);
   },
 });
 
-// Accept only images
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith("image/")) cb(null, true);
-  else cb(new Error("Only image files allowed"));
+  const allowed = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+  console.log("MULTER FILE FILTER:", file.mimetype);
+  if (allowed.includes(file.mimetype)) cb(null, true);
+  else cb(new Error("Only image files are allowed"), false);
 };
 
-const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
-
-module.exports = upload;
+module.exports = multer({ storage, fileFilter });
