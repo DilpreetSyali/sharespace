@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { COLLEGES } from "/workspaces/sharespace/frontend/src/constants/ colleges";
 import { Link, useNavigate } from "react-router-dom";
-import api from "../api/client";
+import { useAuth } from "../context/AuthContext.jsx";
 import PageShell from "../components/PageShell.jsx";
 
 export default function Signup() {
   const navigate = useNavigate();
+  const { signup } = useAuth();
 
   const [form, setForm] = useState({
     name: "",
@@ -47,8 +48,8 @@ export default function Signup() {
         role: form.role,
       };
 
-      await api.post("/api/users/register", payload);
-      navigate("/login");
+      await signup(payload);
+      navigate("/dashboard");
     } catch (error) {
       const msg = error?.response?.data?.message || error?.message || "Signup failed";
       setErr(msg);
@@ -59,19 +60,17 @@ export default function Signup() {
 
   return (
     <PageShell>
-      <div className="grid items-center gap-6 lg:grid-cols-2">
+      <div className="grid items-center gap-6 lg:gap-12 lg:grid-cols-2">
         <div className="hidden lg:block">
-          <div className="rounded-3xl border bg-white p-8 shadow-sm">
-            <h1 className="text-3xl font-extrabold text-slate-900">
-              Sell to your campus. Buy from your campus.
+          <div className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-8 sm:p-10 shadow-lg">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 leading-tight">
+              Sell to your campus.<br/>Buy from your campus.
             </h1>
-            <p className="mt-3 text-slate-600">
-              ShareSpace shows listings only from your{" "}
-              <span className="font-semibold">same college</span>.
-              Faster deals, safer chats, and cheaper items.
+            <p className="mt-4 text-sm sm:text-base text-slate-600 leading-relaxed">
+              ShareSpace shows listings only from your <span className="font-semibold text-slate-900">same college</span>. Faster deals, safer chats, and cheaper items.
             </p>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
               <Feature title="Same-college feed" desc="Only your campus listings." />
               <Feature title="Quick posting" desc="List items in minutes." />
               <Feature title="Better prices" desc="Save money on essentials." />
@@ -84,7 +83,7 @@ export default function Signup() {
           <div className="rounded-3xl border bg-white p-6 shadow-sm">
             <h2 className="text-2xl font-extrabold text-slate-900">Create your account</h2>
             <p className="mt-1 text-sm text-slate-500">
-              Start with your college name. You’ll see campus listings after login.
+              Start with your college name. You’ll see campus listings after signup.
             </p>
 
             {err && (

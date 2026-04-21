@@ -44,9 +44,17 @@ const createItem = async (req, res) => {
 
 const getItems = async (req, res) => {
   try {
-    const query = { status: "available" };
+    const userId = req.user?._id;
+    
+    // Show available items OR items owned by current user (regardless of status)
+    const query = {
+      $or: [
+        { status: "available" },
+        { owner: userId }
+      ],
+      collegeID: req.user?.collegeID
+    };
 
-    if (req.user?.collegeID) query.collegeID = req.user.collegeID;
     if (req.query.category) query.category = req.query.category;
     if (req.query.location) query.location = req.query.location;
     if (req.query.condition) query.condition = req.query.condition;

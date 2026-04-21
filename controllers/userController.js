@@ -1,51 +1,71 @@
-const User = require('../models/userModel');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const User = require("../models/userModel");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+
+const makeAuthResponse = (user) => ({
+  token: jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" }),
+  _id: user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  collegeID: user.collegeID,
+});
 
 const registerUser = async (req, res) => {
-  const { name, email, password, role, collegeID } = req.body;
+  try {
+    const { name, email, password, role, collegeID } = req.body;
 
-  if (await User.findOne({ email })) {
-    return res.status(400).json({ message: 'User already exists' });
+    if (!name || !email || !password || !collegeID) {
+      return res.status(400).json({ message: "Please fill all required fields" });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (await User.findOne({ email: normalizedEmail })) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      name: name.trim(),
+      email: normalizedEmail,
+      password: hashedPassword,
+      role: role || "student",
+      collegeID: collegeID.trim(),
+    });
+
+    return res.status(201).json(makeAuthResponse(user));
+  } catch (error) {
+    return res.status(500).json({ message: error.message || "Signup failed" });
   }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const user = await User.create({
-    name,
-    email,
-    password: hashedPassword,
-    role,
-    collegeID
-  });
-
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-
-  res.status(201).json({
-    token,
-    user: { id: user._id, name, email, role, collegeID }
-  });
 };
 
 const loginUser = async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  const user = await User.findOne({ email });
-  if (!user) return res.status(400).json({ message: 'Invalid credentials' });
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail });
 
-  const match = await bcrypt.compare(password, user.password);
-  if (!match) return res.status(400).json({ message: 'Invalid credentials' });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const match = await bcrypt.compare(password, user.password);
 
-  res.json({
-    token,
-    user: { id: user._id, name: user.name, email, role: user.role, collegeID: user.collegeID }
-  });
+    if (!match) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    return res.json(makeAuthResponse(user));
+  } catch (error) {
+    return res.status(500).json({ message: error.message || "Login failed" });
+  }
 };
 
-/* 🔥 ADMIN */
 const getAllUsers = async (req, res) => {
-  const users = await User.find().select('-password');
+  const users = await User.find().select("-password");
   res.json(users);
 };
 

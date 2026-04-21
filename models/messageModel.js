@@ -12,10 +12,20 @@ const messageSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    type: {
+      type: String,
+      enum: ["text", "location"],
+      default: "text",
+    },
     text: {
       type: String,
-      required: true,
+      default: "",
       trim: true,
+    },
+    location: {
+      lat: { type: Number },
+      lng: { type: Number },
+      label: { type: String, default: "Shared Location" },
     },
   },
   { timestamps: true }

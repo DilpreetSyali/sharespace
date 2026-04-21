@@ -9,19 +9,35 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const saved = localStorage.getItem("sharespace_user");
-    if (saved) setUser(JSON.parse(saved));
+    if (saved) {
+      try {
+        setUser(JSON.parse(saved));
+      } catch {
+        localStorage.removeItem("sharespace_user");
+      }
+    }
     setLoading(false);
   }, []);
 
   const signup = async (payload) => {
     const res = await api.post("/api/users/register", payload);
+
+    if (res.data) {
+      localStorage.setItem("sharespace_user", JSON.stringify(res.data));
+      setUser(res.data);
+    }
+
     return res.data;
   };
 
   const login = async (payload) => {
     const res = await api.post("/api/users/login", payload);
-    localStorage.setItem("sharespace_user", JSON.stringify(res.data));
-    setUser(res.data);
+
+    if (res.data) {
+      localStorage.setItem("sharespace_user", JSON.stringify(res.data));
+      setUser(res.data);
+    }
+
     return res.data;
   };
 
